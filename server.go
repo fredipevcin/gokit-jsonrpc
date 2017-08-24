@@ -12,6 +12,11 @@ import (
 // Handlers maps the method to the proper handler
 type Handlers map[string]Handlerer
 
+// Handlerer is the interface that provides method for serving JSON-RPC
+type Handlerer interface {
+	ServeJSONRPC(ctx context.Context, requestHeader http.Header, params json.RawMessage) (response interface{}, responseHeader http.Header, err error)
+}
+
 // ServerOption sets an optional parameter for servers
 type ServerOption func(*Server)
 
@@ -93,11 +98,6 @@ func (s Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	res.Result = resp
 
 	httptransport.EncodeJSONResponse(ctx, w, res)
-	// err = httptransport.EncodeJSONResponse(ctx, w, res)
-	// if err != nil {
-	// 	s.errorEncoder(ctx, err, w)
-	// 	return
-	// }
 }
 
 // DefaultErrorEncoder writes the error to the ResponseWriter,
