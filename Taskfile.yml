@@ -1,0 +1,5 @@
+test:
+  sources:
+    - "*.go"
+  cmds:
+    - go test -v -race .
