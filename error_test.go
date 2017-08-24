@@ -26,17 +26,15 @@ func TestPredefinedErrors(t *testing.T) {
 		err = jsonrpc.NewError(c.errCode)
 		jerr, ok := err.(jsonrpc.Errorer)
 		if !ok {
-			t.Fatalf("Expected it implements jsonrpc.Erroer for type %T", err)
+			t.Fatalf("Expected err implements jsonrpc.Erroer for type %T", err)
 		}
 
-		gotCode, wantCode := jerr.ErrorCode(), c.errCode
-		if gotCode != wantCode {
-			t.Errorf("ErrorCode(): expected %d, actual %d", wantCode, gotCode)
+		if got, expected := jerr.ErrorCode(), c.errCode; got != expected {
+			t.Errorf("ErrorCode(): expected %d, actual %d", expected, got)
 		}
 
-		gotErr, wantErr := jerr.Error(), c.expMessage
-		if gotErr != wantErr {
-			t.Errorf("Error(): expected %s, actual %s", wantErr, gotErr)
+		if got, expected := jerr.Error(), c.expMessage; got != expected {
+			t.Errorf("Error(): expected %s, actual %s", expected, got)
 		}
 
 		data, merr := json.Marshal(err)
@@ -44,9 +42,8 @@ func TestPredefinedErrors(t *testing.T) {
 			t.Fatalf("Unexpected error marshaling JSON: %s", err)
 		}
 
-		gotEnc, wantEnc := string(data), fmt.Sprintf(`{"code":%d,"message":"%s"}`, c.errCode, c.expMessage)
-		if gotEnc != wantEnc {
-			t.Errorf("JSON: expected %s, actual %s", wantEnc, gotEnc)
+		if got, expected := string(data), fmt.Sprintf(`{"code":%d,"message":"%s"}`, c.errCode, c.expMessage); got != expected {
+			t.Errorf("JSON: expected %s, actual %s", expected, got)
 		}
 	}
 }
@@ -67,14 +64,12 @@ func TestCustomErrors(t *testing.T) {
 			t.Fatalf("Expected it implements jsonrpc.Erroer for type %T", err)
 		}
 
-		gotCode, wantCode := jerr.ErrorCode(), c.errCode
-		if gotCode != wantCode {
-			t.Errorf("ErrorCode(): expected %d, actual %d", wantCode, gotCode)
+		if got, expected := jerr.ErrorCode(), c.errCode; got != expected {
+			t.Errorf("ErrorCode(): expected %d, actual %d", expected, got)
 		}
 
-		gotErr, wantErr := jerr.Error(), c.errMessage
-		if gotErr != wantErr {
-			t.Errorf("Error(): expected %s, actual %s", wantErr, gotErr)
+		if got, expected := jerr.Error(), c.errMessage; got != expected {
+			t.Errorf("Error(): expected %s, actual %s", expected, got)
 		}
 
 		data, merr := json.Marshal(err)
@@ -82,9 +77,8 @@ func TestCustomErrors(t *testing.T) {
 			t.Fatalf("Unexpected error marshaling JSON: %s", err)
 		}
 
-		gotEnc, wantEnc := string(data), fmt.Sprintf(`{"code":%d,"message":"%s"}`, c.errCode, c.errMessage)
-		if gotEnc != wantEnc {
-			t.Errorf("JSON: expected %s, actual %s", wantEnc, gotEnc)
+		if got, expected := string(data), fmt.Sprintf(`{"code":%d,"message":"%s"}`, c.errCode, c.errMessage); got != expected {
+			t.Errorf("JSON: expected %s, actual %s", expected, got)
 		}
 	}
 }

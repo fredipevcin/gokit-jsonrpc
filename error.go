@@ -1,9 +1,16 @@
 package jsonrpc
 
+// ErrorCoder is checked by DefaultErrorEncoder. If an error value implements
+// ErrorCoder, the Error will be used when encoding the error. By default,
+// InternalError (-32603) is used.
+type ErrorCoder interface {
+	ErrorCode() int
+}
+
 // Errorer describes methods for managing errors
 type Errorer interface {
 	Error() string
-	ErrorCode() int
+	ErrorCoder
 }
 
 // Error defines a JSON RPC error that can be returned
