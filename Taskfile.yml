@@ -1,5 +1,26 @@
+qa:
+  desc: "Performs QA checks"
+  deps: [lint, test]
+
 test:
+  desc: "Runs unit tests"
   sources:
     - "*.go"
   cmds:
-    - go test -v -race .
+    - go test -v -race -cover .
+
+lint:
+  desc: "Run static analysis"
+  cmds:
+    - golint github.com/fredipevcin/gokit-jsonrpc
+
+coveralls:
+  cmds:
+    - test -n "${COVERALLS_TOKEN}" || (echo "COVERALLS_TOKEN is undefined" && exit 1)
+    - "type gover >/dev/null 2>&1 || (echo \"gover missing: go get github.com/modocache/gover\" && exit 1)"
+    - "type goveralls >/dev/null 2>&1 || (echo \"goveralls missing: go get github.com/mattn/goveralls\" && exit 1)"
+    - go test -covermode count -coverprofile coverage.coverprofile
+    - gover
+    - goveralls -coverprofile gover.coverprofile -service travis-ci -repotoken ${COVERALLS_TOKEN}
+    - find . -name '*.coverprofile' -delete
+  silent: true
