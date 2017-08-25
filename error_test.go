@@ -82,3 +82,21 @@ func TestCustomErrors(t *testing.T) {
 		}
 	}
 }
+
+func TestErrorHelperInvalidParams(t *testing.T) {
+	var err error
+	err = jsonrpc.NewInvalidParamsError("field missing")
+
+	jerr, ok := err.(jsonrpc.Errorer)
+	if !ok {
+		t.Fatalf("Expected it implements jsonrpc.Erroer for type %T", err)
+	}
+
+	if got, expected := jerr.ErrorCode(), jsonrpc.InvalidParamsError; got != expected {
+		t.Errorf("ErrorCode(): expected %d, actual %d", expected, got)
+	}
+
+	if got, expected := jerr.Error(), "field missing"; got != expected {
+		t.Errorf("Error(): expected %s, actual %s", expected, got)
+	}
+}

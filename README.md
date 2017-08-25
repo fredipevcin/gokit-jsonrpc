@@ -11,7 +11,7 @@ Inspired/based on https://github.com/go-kit/kit/pull/576 and https://github.com/
 ## Development
 
 ```bash
-task test
+task qa
 ```
 
 ### Dependencies
