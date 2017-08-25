@@ -47,7 +47,11 @@ func TestHandlerInvalidParameters(t *testing.T) {
 	}
 
 	buf, _ := ioutil.ReadAll(resp.Body)
-	if got, expected := string(buf), `{"jsonrpc":"2.0","result":{"code":-32602,"message":"field missing"},"id":1}`+"\n"; got != expected {
+	if got, expected := string(buf), `{"jsonrpc":"2.0","error":{"code":-32602,"message":"field missing"},"id":1}`+"\n"; got != expected {
 		t.Errorf("Response: expected '%s', actual '%s'", expected, got)
+	}
+
+	if got, expected := resp.StatusCode, http.StatusOK; got != expected {
+		t.Errorf("StatusCode: expected '%d', actual '%d'", expected, got)
 	}
 }

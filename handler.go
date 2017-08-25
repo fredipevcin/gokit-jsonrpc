@@ -77,7 +77,7 @@ func HandlerErrorLogger(logger log.Logger) HandlerOption {
 }
 
 // ServeJSONRPC implements Handlerer
-func (s Handler) ServeJSONRPC(ctx context.Context, requestHeader http.Header, params json.RawMessage) (responseParams interface{}, responseHeader http.Header, err error) {
+func (s Handler) ServeJSONRPC(ctx context.Context, requestHeader http.Header, params json.RawMessage) (responseParams json.RawMessage, responseHeader http.Header, err error) {
 	for _, f := range s.before {
 		ctx = f(ctx, requestHeader)
 	}

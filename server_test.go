@@ -15,13 +15,13 @@ import (
 
 const testMethodName = "test"
 
-type HandlererFunc func(ctx context.Context, requestHeader http.Header, params json.RawMessage) (response interface{}, responseHeader http.Header, err error)
+type HandlererFunc func(ctx context.Context, requestHeader http.Header, params json.RawMessage) (response json.RawMessage, responseHeader http.Header, err error)
 
-func (h HandlererFunc) ServeJSONRPC(ctx context.Context, requestHeader http.Header, params json.RawMessage) (response interface{}, responseHeader http.Header, err error) {
+func (h HandlererFunc) ServeJSONRPC(ctx context.Context, requestHeader http.Header, params json.RawMessage) (response json.RawMessage, responseHeader http.Header, err error) {
 	return h(ctx, requestHeader, params)
 }
 
-func nopHandler(ctx context.Context, requestHeader http.Header, params json.RawMessage) (response interface{}, responseHeader http.Header, err error) {
+func nopHandler(ctx context.Context, requestHeader http.Header, params json.RawMessage) (response json.RawMessage, responseHeader http.Header, err error) {
 	return nil, nil, nil
 }
 
@@ -147,7 +147,7 @@ func TestServerMethodNotFound(t *testing.T) {
 
 func TestServerHandlerError(t *testing.T) {
 	r, _ := http.NewRequest(http.MethodPost, "/", strings.NewReader(fmt.Sprintf(`{"jsonrpc":"2.0","method":"%s","params":{"a":"b"}}`, testMethodName)))
-	h := HandlererFunc(func(ctx context.Context, requestHeader http.Header, params json.RawMessage) (response interface{}, responseHeader http.Header, err error) {
+	h := HandlererFunc(func(ctx context.Context, requestHeader http.Header, params json.RawMessage) (response json.RawMessage, responseHeader http.Header, err error) {
 		return nil, nil, errors.New("oooh")
 	})
 	_, err := testServer(r, h)
@@ -165,7 +165,7 @@ func TestServerSuccess(t *testing.T) {
 	r, _ := http.NewRequest(http.MethodPost, "/", strings.NewReader(fmt.Sprintf(`{"jsonrpc":"2.0","method":"%s","params":{"a":"b"}}`, testMethodName)))
 	r.Header.Set("X-Foo", "bar")
 
-	h := HandlererFunc(func(ctx context.Context, requestHeader http.Header, params json.RawMessage) (response interface{}, responseHeader http.Header, err error) {
+	h := HandlererFunc(func(ctx context.Context, requestHeader http.Header, params json.RawMessage) (response json.RawMessage, responseHeader http.Header, err error) {
 
 		if got, expected := string(params), `{"a":"b"}`; got != expected {
 			t.Errorf("Expect params %s, got %s", expected, got)
@@ -178,7 +178,7 @@ func TestServerSuccess(t *testing.T) {
 		hdr := http.Header{}
 		hdr.Set("X-ReqId", "124")
 
-		return "woohoo", hdr, nil
+		return json.RawMessage(`"woohoo"`), hdr, nil
 	})
 	rw, err := testServer(r, h)
 

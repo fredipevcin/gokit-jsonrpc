@@ -14,7 +14,7 @@ type Handlers map[string]Handlerer
 
 // Handlerer is the interface that provides method for serving JSON-RPC
 type Handlerer interface {
-	ServeJSONRPC(ctx context.Context, requestHeader http.Header, params json.RawMessage) (response interface{}, responseHeader http.Header, err error)
+	ServeJSONRPC(ctx context.Context, requestHeader http.Header, params json.RawMessage) (response json.RawMessage, responseHeader http.Header, err error)
 }
 
 // ServerOption sets an optional parameter for servers
@@ -95,7 +95,17 @@ func (s Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		ID:          req.ID,
 	}
 
-	res.Result = resp
+	var respErr Error
+	err = json.Unmarshal(resp, &respErr)
+	// try to find out if resp is an error
+	if err == nil && respErr.ErrorCode() != 0 {
+		// it has to set a pointer otherwise in Go 1.7 base64 encoded string is returned.
+		// In Go 1.8 works as expected
+		// Golang release notes 1.8: A RawMessage value now marshals the same as its pointer type.
+		res.Error = &respErr
+	} else {
+		res.Result = &resp
+	}
 
 	httptransport.EncodeJSONResponse(ctx, w, res)
 }
