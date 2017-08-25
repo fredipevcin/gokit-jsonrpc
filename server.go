@@ -69,8 +69,7 @@ func (s Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// has to be a specific version and method should not be empty
-	if req.JSONRPC != Version || req.Method == "" {
+	if err := req.Validate(); err != nil {
 		s.errorEncoder(ctx, NewError(InvalidRequestError), w)
 		return
 	}

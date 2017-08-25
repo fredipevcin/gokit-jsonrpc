@@ -2,8 +2,9 @@ package jsonrpc
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 	"net/http"
+	"strings"
 )
 
 const (
@@ -14,6 +15,9 @@ const (
 	ContentType string = "application/json; charset=utf-8"
 )
 
+// ErrParsingRequestID is used when request id cannot be parsed
+var ErrParsingRequestID = errors.New("Unknown value for RequestID")
+
 // Request defines a JSON RPC request from the spec
 // http://www.jsonrpc.org/specification#request_object
 type Request struct {
@@ -21,6 +25,29 @@ type Request struct {
 	Method  string          `json:"method"`
 	Params  json.RawMessage `json:"params"`
 	ID      *RequestID      `json:"id"`
+}
+
+// Validate request
+func (r *Request) Validate() error {
+	// A String specifying the version of the JSON-RPC protocol. MUST be exactly "2.0"
+	if r.JSONRPC != Version {
+		return NewError(InvalidRequestError)
+	}
+
+	// An identifier established by the Client that MUST contain a String, Number, or NULL value if included.
+	// If it is not included it is assumed to be a notification.
+	if r.ID != nil && r.ID.Error() != "" {
+		return NewError(InvalidRequestError)
+	}
+
+	// A String containing the name of the method to be invoked.
+	// Method names that begin with the word rpc followed by a period character (U+002E or ASCII 46) are reserved for
+	// rpc-internal methods and extensions and MUST NOT be used for anything else.
+	if r.Method == "" || strings.HasPrefix(r.Method, "rpc.") {
+		return NewError(InvalidRequestError)
+	}
+
+	return nil
 }
 
 // RequestID defines a request ID that can be string, number, or null.
@@ -38,13 +65,22 @@ type RequestID struct {
 	stringError error
 }
 
+// Error implements errors interface
+func (id *RequestID) Error() string {
+	if id.intError == nil || id.floatError == nil || id.stringError == nil {
+		return ""
+	}
+
+	return ErrParsingRequestID.Error()
+}
+
 // UnmarshalJSON implements json.Unmarshaler
 func (id *RequestID) UnmarshalJSON(b []byte) error {
 	id.intError = json.Unmarshal(b, &id.intValue)
 	id.floatError = json.Unmarshal(b, &id.floatValue)
 	id.stringError = json.Unmarshal(b, &id.stringValue)
 	if id.intError != nil && id.floatError != nil && id.stringError != nil {
-		return fmt.Errorf("Unknown value for RequestID(%s)", b)
+		return ErrParsingRequestID
 	}
 	return nil
 }

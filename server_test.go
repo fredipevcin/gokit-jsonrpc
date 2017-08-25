@@ -64,7 +64,6 @@ func TestServerInvalidMethod(t *testing.T) {
 func TestServerRequestBodyCannotBeParsed(t *testing.T) {
 	cases := []string{
 		"notjson",
-		`{"id":true}`,
 		`{"method":1234}`,
 		`{"jsonrpc":1234}`,
 	}

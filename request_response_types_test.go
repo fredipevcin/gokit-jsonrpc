@@ -99,12 +99,16 @@ func TestCannotUnMarshalIDInvalidValue(t *testing.T) {
 
 	jsonVal := `{"id":true}`
 	err := json.Unmarshal([]byte(jsonVal), &r)
-	if err == nil {
-		t.Fatalf("Expected error unmarshaling JSON id: %s\n", jsonVal)
+	if err != jsonrpc.ErrParsingRequestID {
+		t.Fatalf("Expected error unmarshaling JSON id: %s", jsonVal)
 	}
 
-	if err.Error() != "Unknown value for RequestID(true)" {
-		t.Fatalf("Unxpected error unmarshaling JSON id: %s\n", err)
+	if r.ID == nil {
+		t.Fatal("RequestID should not be nil")
+	}
+
+	if r.ID.Error() != jsonrpc.ErrParsingRequestID.Error() {
+		t.Fatalf("Unxpected error unmarshaling JSON id: %s", r.ID)
 	}
 }
 
@@ -160,4 +164,60 @@ func TestMarshalRequestID(t *testing.T) {
 		}
 	}
 
+}
+
+func TestValidRequest(t *testing.T) {
+	cases := []string{
+		`{"jsonrpc":"2.0","id":1234,"method":"method"}`,
+		`{"jsonrpc":"2.0","id":"string","method":"name"}`,
+		`{"jsonrpc":"2.0","id":null,"method":"name"}`,
+		`{"jsonrpc":"2.0","method":"name"}`,
+	}
+
+	for _, c := range cases {
+		var err error
+		r := jsonrpc.Request{}
+
+		err = r.Validate()
+		if err == nil {
+			t.Fatalf("TC(%s) Request should not be valid", c)
+		}
+
+		err = json.Unmarshal([]byte(c), &r)
+		if err != nil {
+			t.Fatalf("TC(%s) Unexpected error unmarshaling Request: %s", c, err)
+		}
+		err = r.Validate()
+		if err != nil {
+			t.Fatalf("TC(%s) Request is not valid: %s", c, err)
+		}
+	}
+}
+func TestInvalidRequest(t *testing.T) {
+	cases := []string{
+		`{"jsonrpc":"2.0","id":true,"method":"method"}`,
+		`{"jsonrpc":"2.0","id":[],"method":"method"}`,
+		`{"jsonrpc":"2.0","id":"string"}`,
+		`{"jsonrpc":"1.0","id":null,"method":"name"}`,
+		`{"jsonrpc":"2.0","id":"string","method":"rpc.internal"}`,
+	}
+
+	for _, c := range cases {
+		var err error
+		r := jsonrpc.Request{}
+
+		err = r.Validate()
+		if err == nil {
+			t.Fatalf("TC(%s) Request should not be valid", c)
+		}
+
+		err = json.Unmarshal([]byte(c), &r)
+		if err != nil && err != jsonrpc.ErrParsingRequestID {
+			t.Fatalf("TC(%s) Unexpected error unmarshaling Request: %s", c, err)
+		}
+		err = r.Validate()
+		if err == nil {
+			t.Fatalf("TC(%s) Request should not be valid", c)
+		}
+	}
 }
