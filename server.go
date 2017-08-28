@@ -3,6 +3,7 @@ package jsonrpc
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 
@@ -11,6 +12,14 @@ import (
 
 // Handlers maps the method to the proper handler
 type Handlers map[string]Handlerer
+
+// Set handler for given method, panics if method already exists
+func (h Handlers) Set(method string, handler Handlerer) {
+	if _, ok := h[method]; ok {
+		panic(fmt.Sprintf("Handler for method %s already exists", method))
+	}
+	h[method] = handler
+}
 
 // Handlerer is the interface that provides method for serving JSON-RPC
 type Handlerer interface {

@@ -77,6 +77,6 @@ func ErrorMessage(code int) string {
 }
 
 // NewInvalidParamsError is helper for returning InvalidParamsError
-func NewInvalidParamsError(msg string) Error {
-	return NewError(InvalidParamsError, msg)
+func NewInvalidParamsError(msg ...string) Error {
+	return NewError(InvalidParamsError, msg...)
 }

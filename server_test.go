@@ -225,3 +225,22 @@ func TestDefaultErrorEncoderWithCustomMessages(t *testing.T) {
 		t.Errorf("Expected body '%s', got '%s'", got, expect)
 	}
 }
+
+func TestHandlers(t *testing.T) {
+	handlers := jsonrpc.Handlers{}
+
+	handlers.Set("add", HandlererFunc(nopHandler))
+
+	// this should panic
+	defer func() {
+		r := recover()
+		if r == nil {
+			t.Fatalf("The code did not panic")
+		}
+
+		if got, expect := r, "Handler for method add already exists"; got != expect {
+			t.Errorf("Unexpected panic '%s', got %s", got, expect)
+		}
+	}()
+	handlers.Set("add", HandlererFunc(nopHandler))
+}
