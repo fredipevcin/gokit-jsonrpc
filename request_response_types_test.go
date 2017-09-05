@@ -1,6 +1,8 @@
 package jsonrpc_test
 
 import (
+	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"testing"
@@ -220,4 +222,83 @@ func TestInvalidRequest(t *testing.T) {
 			t.Fatalf("TC(%s) Request should not be valid", c)
 		}
 	}
+}
+func TestPopulateRequestContext(t *testing.T) {
+
+	cases := []struct {
+		req              string
+		expMethod        string
+		expJSONRequestID string
+	}{
+		{
+			`{"jsonrpc":"2.0","id":1234,"method":"method"}`,
+			"method",
+			`1234`,
+		},
+		{
+			`{"jsonrpc":"2.0","id":"string","method":"name"}`,
+			"name",
+			`"string"`,
+		},
+		{
+			`{"jsonrpc":"2.0","id":null,"method":"name"}`,
+			"name",
+			``,
+		},
+		{
+			`{"jsonrpc":"2.0","method":"name"}`,
+			"name",
+			``,
+		},
+	}
+
+	for idx, c := range cases {
+		idx = idx + 1
+		var err error
+		r := jsonrpc.Request{}
+
+		err = json.Unmarshal([]byte(c.req), &r)
+		if err != nil && err != jsonrpc.ErrParsingRequestID {
+			t.Fatalf("TC(%d) Unexpected error unmarshaling Request: %s", idx, err)
+		}
+
+		ctx := context.Background()
+		ctx = jsonrpc.PopulateRequestContext(ctx, &r)
+
+		if got, want := ctx.Value(jsonrpc.ContextKeyRequestJSONRPC).(string), "2.0"; got != want {
+			t.Errorf("TC(%d) Expecting JSONRPC %s, got %s", idx, want, got)
+		}
+
+		if got, want := ctx.Value(jsonrpc.ContextKeyRequestMethod).(string), c.expMethod; got != want {
+			t.Errorf("TC(%d) Expecting method %s, got %s", idx, want, got)
+		}
+
+		var reqId *jsonrpc.RequestID
+		if c.expJSONRequestID != "" {
+			err = json.Unmarshal([]byte(c.expJSONRequestID), &reqId)
+			if err != nil {
+				t.Fatalf("TC(%d) Unexpected error unmarshaling RequestID: %s", idx, err)
+			}
+		}
+
+		if got, want := ctx.Value(jsonrpc.ContextKeyRequestID).(*jsonrpc.RequestID), reqId; !equalRequestID(got, want) {
+			t.Errorf("TC(%d) Expecting request ID %#v, got %#v", idx, want, got)
+		}
+	}
+}
+
+func equalRequestID(r1, r2 *jsonrpc.RequestID) bool {
+	if r1 == nil && r2 == nil {
+		return true
+	}
+	if r1 != nil && r2 == nil {
+		return false
+	}
+	if r1 == nil && r2 != nil {
+		return false
+	}
+
+	b1, _ := r1.MarshalJSON()
+	b2, _ := r2.MarshalJSON()
+	return bytes.Equal(b1, b2)
 }

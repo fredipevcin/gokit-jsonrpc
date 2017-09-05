@@ -78,6 +78,8 @@ func (s Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ctx = PopulateRequestContext(ctx, &req)
+
 	if err := req.Validate(); err != nil {
 		s.errorEncoder(ctx, NewError(InvalidRequestError), w)
 		return

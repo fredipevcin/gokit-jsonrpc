@@ -1,6 +1,7 @@
 package jsonrpc
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -133,3 +134,30 @@ type Response struct {
 func (r Response) Headers() http.Header {
 	return r.RespHeaders
 }
+
+// PopulateRequestContext is a RequestFunc that populates several values into
+// the context from the JSONRPC request. Those values may be extracted using the
+// corresponding ContextKey type in this package.
+func PopulateRequestContext(ctx context.Context, r *Request) context.Context {
+	for k, v := range map[contextKey]interface{}{
+		ContextKeyRequestJSONRPC: r.JSONRPC,
+		ContextKeyRequestMethod:  r.Method,
+		ContextKeyRequestID:      r.ID,
+	} {
+		ctx = context.WithValue(ctx, k, v)
+	}
+	return ctx
+}
+
+type contextKey int
+
+const (
+	// ContextKeyRequestJSONRPC is populated in the context by PopulateRequestContext
+	ContextKeyRequestJSONRPC contextKey = iota
+
+	// ContextKeyRequestMethod is populated in the context by PopulateRequestContext
+	ContextKeyRequestMethod
+
+	// ContextKeyRequestID is populated in the context by PopulateRequestContext
+	ContextKeyRequestID
+)
