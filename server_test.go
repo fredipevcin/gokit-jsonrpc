@@ -213,6 +213,7 @@ func TestDefaultErrorEncoderWithPredfinedErrors(t *testing.T) {
 		t.Errorf("Expected body '%s', got '%s'", expect, got)
 	}
 }
+
 func TestDefaultErrorEncoderWithCustomMessages(t *testing.T) {
 	rw := httptest.NewRecorder()
 	err := jsonrpc.NewError(jsonrpc.InvalidParamsError, "Booya")
@@ -225,6 +226,7 @@ func TestDefaultErrorEncoderWithCustomMessages(t *testing.T) {
 		t.Errorf("Expected body '%s', got '%s'", expect, got)
 	}
 }
+
 func TestDefaultErrorEncoderWithOriginalError(t *testing.T) {
 	rw := httptest.NewRecorder()
 	err := errors.New("booya")
@@ -234,6 +236,26 @@ func TestDefaultErrorEncoderWithOriginalError(t *testing.T) {
 		t.Errorf("Expected response code %d, got %d", expect, got)
 	}
 	if got, expect := strings.TrimSpace(rw.Body.String()), `{"jsonrpc":"2.0","error":{"code":-32603,"message":"Internal JSON-RPC error"}}`; got != expect {
+		t.Errorf("Expected body '%s', got '%s'", expect, got)
+	}
+}
+
+func TestDefaultErrorEncoderWithPopulatedRequest(t *testing.T) {
+	var req jsonrpc.Request
+
+	json.Unmarshal([]byte(`{"jsonrpc":"2.0","method":"some_method1","id":1234}`), &req)
+
+	ctx := context.Background()
+	ctx = jsonrpc.PopulateRequestContext(ctx, &req)
+
+	rw := httptest.NewRecorder()
+	err := errors.New("booya")
+	jsonrpc.DefaultErrorEncoder(ctx, err, rw)
+
+	if got, expect := rw.Code, http.StatusOK; got != expect {
+		t.Errorf("Expected response code %d, got %d", expect, got)
+	}
+	if got, expect := strings.TrimSpace(rw.Body.String()), `{"jsonrpc":"2.0","error":{"code":-32603,"message":"Internal JSON-RPC error"},"id":1234}`; got != expect {
 		t.Errorf("Expected body '%s', got '%s'", expect, got)
 	}
 }

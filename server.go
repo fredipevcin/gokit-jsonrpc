@@ -126,7 +126,7 @@ func (s Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // If the error implements ErrorCoder, the provided code will be set on the
 // response error.
 // If the error implements Headerer, the given headers will be set.
-func DefaultErrorEncoder(_ context.Context, err error, w http.ResponseWriter) {
+func DefaultErrorEncoder(ctx context.Context, err error, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", ContentType)
 	e := NewError(InternalError)
 	if te, ok := err.(ErrorCoder); ok {
@@ -138,7 +138,10 @@ func DefaultErrorEncoder(_ context.Context, err error, w http.ResponseWriter) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+
+	reqID, _ := ctx.Value(ContextKeyRequestID).(*RequestID)
 	json.NewEncoder(w).Encode(Response{
+		ID:      reqID,
 		JSONRPC: Version,
 		Error:   &e,
 	})
