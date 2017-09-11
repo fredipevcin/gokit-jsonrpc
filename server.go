@@ -128,9 +128,13 @@ func (s Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // If the error implements Headerer, the given headers will be set.
 func DefaultErrorEncoder(_ context.Context, err error, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", ContentType)
-	e := NewError(InternalError, err.Error())
-	if sc, ok := err.(ErrorCoder); ok {
-		e.Code = sc.ErrorCode()
+	e := NewError(InternalError)
+	if te, ok := err.(ErrorCoder); ok {
+		e.Code = te.ErrorCode()
+	}
+
+	if te, ok := err.(Errorer); ok {
+		e.Message = te.Error()
 	}
 
 	w.WriteHeader(http.StatusOK)

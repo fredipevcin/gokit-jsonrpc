@@ -48,7 +48,7 @@ func TestServerInvalidMethod(t *testing.T) {
 	rw, err := testServer(r, h)
 
 	if got, expect := rw.Code, http.StatusMethodNotAllowed; got != expect {
-		t.Errorf("Expected response code %d, got %d", expect, expect)
+		t.Errorf("Expected response code %d, got %d", expect, got)
 	}
 
 	if err != nil {
@@ -186,18 +186,18 @@ func TestServerSuccess(t *testing.T) {
 	}
 
 	if got, expect := rw.Code, http.StatusOK; got != expect {
-		t.Errorf("Expected response code %d, got %d", expect, expect)
+		t.Errorf("Expected response code %d, got %d", expect, got)
 	}
 
 	if got, expect := rw.Header().Get("content-type"), "application/json; charset=utf-8"; got != expect {
-		t.Errorf("Expected content-type '%s', got '%s'", got, expect)
+		t.Errorf("Expected content-type '%s', got '%s'", expect, got)
 	}
 	if got, expect := rw.Header().Get("x-reqid"), "124"; got != expect {
-		t.Errorf("Expected response header '%s', got '%s'", got, expect)
+		t.Errorf("Expected response header '%s', got '%s'", expect, got)
 	}
 
 	if got, expect := strings.TrimSpace(rw.Body.String()), `{"jsonrpc":"2.0","result":"woohoo"}`; got != expect {
-		t.Errorf("Expected body '%s', got '%s'", got, expect)
+		t.Errorf("Expected body '%s', got '%s'", expect, got)
 	}
 }
 
@@ -207,10 +207,10 @@ func TestDefaultErrorEncoderWithPredfinedErrors(t *testing.T) {
 	jsonrpc.DefaultErrorEncoder(context.Background(), err, rw)
 
 	if got, expect := rw.Code, http.StatusOK; got != expect {
-		t.Errorf("Expected response code %d, got %d", expect, expect)
+		t.Errorf("Expected response code %d, got %d", expect, got)
 	}
 	if got, expect := strings.TrimSpace(rw.Body.String()), `{"jsonrpc":"2.0","error":{"code":-32603,"message":"Internal JSON-RPC error"}}`; got != expect {
-		t.Errorf("Expected body '%s', got '%s'", got, expect)
+		t.Errorf("Expected body '%s', got '%s'", expect, got)
 	}
 }
 func TestDefaultErrorEncoderWithCustomMessages(t *testing.T) {
@@ -219,10 +219,22 @@ func TestDefaultErrorEncoderWithCustomMessages(t *testing.T) {
 	jsonrpc.DefaultErrorEncoder(context.Background(), err, rw)
 
 	if got, expect := rw.Code, http.StatusOK; got != expect {
-		t.Errorf("Expected response code %d, got %d", expect, expect)
+		t.Errorf("Expected response code %d, got %d", expect, got)
 	}
 	if got, expect := strings.TrimSpace(rw.Body.String()), `{"jsonrpc":"2.0","error":{"code":-32602,"message":"Booya"}}`; got != expect {
-		t.Errorf("Expected body '%s', got '%s'", got, expect)
+		t.Errorf("Expected body '%s', got '%s'", expect, got)
+	}
+}
+func TestDefaultErrorEncoderWithOriginalError(t *testing.T) {
+	rw := httptest.NewRecorder()
+	err := errors.New("booya")
+	jsonrpc.DefaultErrorEncoder(context.Background(), err, rw)
+
+	if got, expect := rw.Code, http.StatusOK; got != expect {
+		t.Errorf("Expected response code %d, got %d", expect, got)
+	}
+	if got, expect := strings.TrimSpace(rw.Body.String()), `{"jsonrpc":"2.0","error":{"code":-32603,"message":"Internal JSON-RPC error"}}`; got != expect {
+		t.Errorf("Expected body '%s', got '%s'", expect, got)
 	}
 }
 
@@ -239,7 +251,7 @@ func TestHandlers(t *testing.T) {
 		}
 
 		if got, expect := r, "Handler for method add already exists"; got != expect {
-			t.Errorf("Unexpected panic '%s', got %s", got, expect)
+			t.Errorf("Unexpected panic '%s', got %s", expect, got)
 		}
 	}()
 	handlers.Set("add", HandlererFunc(nopHandler))
