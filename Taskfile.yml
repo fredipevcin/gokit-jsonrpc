@@ -12,7 +12,7 @@ test:
 lint:
   desc: "Run static analysis"
   cmds:
-    - golint github.com/fredipevcin/gokit-jsonrpc
+    - golint -set_exit_status github.com/fredipevcin/gokit-jsonrpc
 
 coveralls:
   cmds:

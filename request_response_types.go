@@ -135,6 +135,14 @@ func (r Response) Headers() http.Header {
 	return r.RespHeaders
 }
 
+// NotificationResponse defines a JSON RPC notification response
+type NotificationResponse struct{}
+
+// StatusCode returns no content status code
+func (NotificationResponse) StatusCode() int {
+	return http.StatusNoContent
+}
+
 // PopulateRequestContext is a RequestFunc that populates several values into
 // the context from the JSONRPC request. Those values may be extracted using the
 // corresponding ContextKey type in this package.

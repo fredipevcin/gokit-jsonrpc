@@ -145,7 +145,7 @@ func TestServerMethodNotFound(t *testing.T) {
 }
 
 func TestServerHandlerError(t *testing.T) {
-	r, _ := http.NewRequest(http.MethodPost, "/", strings.NewReader(fmt.Sprintf(`{"jsonrpc":"2.0","method":"%s","params":{"a":"b"}}`, testMethodName)))
+	r, _ := http.NewRequest(http.MethodPost, "/", strings.NewReader(fmt.Sprintf(`{"jsonrpc":"2.0","method":"%s","params":{"a":"b"},"id":"id"}`, testMethodName)))
 	h := HandlererFunc(func(ctx context.Context, requestHeader http.Header, params json.RawMessage) (response json.RawMessage, responseHeader http.Header, err error) {
 		return nil, nil, errors.New("oooh")
 	})
@@ -161,7 +161,7 @@ func TestServerHandlerError(t *testing.T) {
 }
 
 func TestServerSuccess(t *testing.T) {
-	r, _ := http.NewRequest(http.MethodPost, "/", strings.NewReader(fmt.Sprintf(`{"jsonrpc":"2.0","method":"%s","params":{"a":"b"}}`, testMethodName)))
+	r, _ := http.NewRequest(http.MethodPost, "/", strings.NewReader(fmt.Sprintf(`{"jsonrpc":"2.0","method":"%s","params":{"a":"b"},"id":"id"}`, testMethodName)))
 	r.Header.Set("X-Foo", "bar")
 
 	h := HandlererFunc(func(ctx context.Context, requestHeader http.Header, params json.RawMessage) (response json.RawMessage, responseHeader http.Header, err error) {
@@ -196,7 +196,7 @@ func TestServerSuccess(t *testing.T) {
 		t.Errorf("Expected response header '%s', got '%s'", expect, got)
 	}
 
-	if got, expect := strings.TrimSpace(rw.Body.String()), `{"jsonrpc":"2.0","result":"woohoo"}`; got != expect {
+	if got, expect := strings.TrimSpace(rw.Body.String()), `{"jsonrpc":"2.0","result":"woohoo","id":"id"}`; got != expect {
 		t.Errorf("Expected body '%s', got '%s'", expect, got)
 	}
 }
@@ -277,4 +277,22 @@ func TestHandlers(t *testing.T) {
 		}
 	}()
 	handlers.Set("add", HandlererFunc(nopHandler))
+}
+
+func TestNotificationRequest(t *testing.T) {
+	r, _ := http.NewRequest(http.MethodPost, "/", strings.NewReader(fmt.Sprintf(`{"jsonrpc":"2.0","method":"%s"}`, testMethodName)))
+
+	h := HandlererFunc(nopHandler)
+	rw, err := testServer(r, h)
+
+	if err != nil {
+		t.Errorf("Expecting error to be nil, got: %s", err)
+	}
+
+	if got, expect := strings.TrimSpace(rw.Body.String()), ""; got != expect {
+		t.Errorf("Expected body '%s', got '%s'", expect, got)
+	}
+	if got, expect := rw.Code, http.StatusNoContent; got != expect {
+		t.Errorf("Expected status code '%v', got '%v'", expect, got)
+	}
 }

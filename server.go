@@ -93,7 +93,15 @@ func (s Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// notification
+	if req.ID == nil {
+		go srv.ServeJSONRPC(ctx, r.Header, req.Params)
+		httptransport.EncodeJSONResponse(ctx, w, NotificationResponse{})
+		return
+	}
+
 	resp, respHeaders, err := srv.ServeJSONRPC(ctx, r.Header, req.Params)
+
 	if err != nil {
 		s.errorEncoder(ctx, err, w)
 		return
@@ -145,13 +153,6 @@ func DefaultErrorEncoder(ctx context.Context, err error, w http.ResponseWriter) 
 		JSONRPC: Version,
 		Error:   &e,
 	})
-}
-
-// StatusCoder is checked by DefaultErrorEncoder. If an error value implements
-// StatusCoder, the StatusCode will be used when encoding the error. By default,
-// StatusInternalServerError (500) is used.
-type StatusCoder interface {
-	StatusCode() int
 }
 
 // Headerer is checked by DefaultErrorEncoder. If an error value implements
